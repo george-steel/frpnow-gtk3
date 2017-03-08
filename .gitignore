@@ -1,0 +1,6 @@
+*.hi
+*.o
+
+build/
+.stack-work/
+dist/

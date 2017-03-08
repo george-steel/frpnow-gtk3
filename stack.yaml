@@ -1,0 +1,5 @@
+packages:
+    - '.'
+resolver: lts-8.3
+extra-deps:
+    - frpnow-0.18
