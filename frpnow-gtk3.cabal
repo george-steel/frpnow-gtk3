@@ -1,21 +1,20 @@
 Name:                frpnow-gtk3
-Version:             0.11
+Version:             0.12
 Synopsis:	     Program GUIs with GTK and frpnow!
 Description:          Program GUIs with GTK and frpnow!
 License:             BSD3
 License-file:        LICENSE
-Author:              Atze van der Ploeg
-Maintainer:          atzeus@gmail.com
+Author:              Atze van der Ploeg and George Steel
+Maintainer:          george.steel@gmail.com
 Homepage:            https://github.com/atzeus/FRPNow
 Build-Type:          Simple
 Cabal-Version:       >=1.6
-Data-files:          ChangeLog
 Category:            Control
 Tested-With:         GHC==7.10.1
+
 Library
-  Build-Depends: base >= 2 && <= 6, mtl >= 1.0, containers, transformers, frpnow, glib, gtk
+  Build-Depends: base >= 2 && <= 6, mtl >= 1.0, containers, transformers, frpnow, glib, gtk3, text
   Exposed-modules: Control.FRPNow.GTK
-  Extensions:	 RankNTypes, GADTs, CPP, EmptyDataDecls
 
 source-repository head
     type:     git
