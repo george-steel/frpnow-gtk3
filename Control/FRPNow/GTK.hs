@@ -15,7 +15,7 @@ module Control.FRPNow.GTK(
   -- * General interface
   ffor, runNowGTK, setAttr, getSignal, getUnitSignal, getSimpleSignal, getClock,
   -- * Utility functions
-  createLabel, createButton, createEntry, createProgressBar,createSlider,
+  createLabel, createButton, createIconButton, createEntry, createProgressBar,createSlider,
 
   runFileChooserDialog
   ) where
@@ -146,6 +146,22 @@ createLabel s =
   do l <- sync $ labelNew (Nothing :: Maybe String)
      setAttr labelLabel l s
      return l
+
+createIconButton :: T.Text -> Maybe T.Text -> Now (Button, EvStream ())
+createIconButton icon mlbl = do
+    btn <- sync buttonNew
+    sync $ do
+        img <- imageNewFromIconName icon IconSizeButton
+        case mlbl of
+            Nothing -> containerAdd btn img
+            Just lbl -> do
+                l <- labelNew mlbl
+                hb <- hBoxNew False 2
+                boxPackStart hb img PackNatural 0
+                boxPackStart hb l PackNatural 0
+                containerAdd btn hb
+    pressed <- getUnitSignal buttonActivated btn
+    return (btn, pressed)
 
 
 createButton :: Behavior String ->  Now (Button,EvStream ())
