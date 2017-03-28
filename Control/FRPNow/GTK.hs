@@ -15,7 +15,8 @@ module Control.FRPNow.GTK(
   -- * General interface
   ffor, runNowGTK, setAttr, getSignal, getUnitSignal, getSimpleSignal, getClock,
   -- * Utility functions
-  createLabel, createButton, createIconButton, createEntry, createProgressBar,createSlider,
+  IconName, createLabel, createButton, createDynamicButton, createToggleButton,
+  createEntry, createProgressBar,createSlider,
 
   runFileChooserDialog
   ) where
@@ -53,7 +54,7 @@ schedule ref m = postGUIAsync $
 
 -- | Set a GTK attribute to a behavior. Each time the behavior changes the
 -- attribute is updated.
-setAttr :: (WidgetClass w, Eq a) => Attr w a -> w -> Behavior a -> Now ()
+setAttr :: (WidgetClass w, Eq a) => ReadWriteAttr w b a -> w -> Behavior a -> Now ()
 setAttr a w b =
      do i <- sample b
         sync $ set w [a := i]
@@ -124,6 +125,7 @@ getClock precision =
      sample $ fromChanges 0 res
 
 
+--------------------------------------------------------------------------------
 
 runFileChooserDialog :: FileChooserDialog -> Now (Event (Maybe FilePath))
 runFileChooserDialog dialog = do
@@ -141,35 +143,47 @@ runFileChooserDialog dialog = do
     return retev
 
 
-createLabel :: Behavior String -> Now Label
-createLabel s =
-  do l <- sync $ labelNew (Nothing :: Maybe String)
+createLabel :: Behavior Text -> Now Label
+createLabel s = do
+     l <- sync $ labelNew (Nothing :: Maybe String)
      setAttr labelLabel l s
      return l
 
-createIconButton :: T.Text -> Maybe T.Text -> Now (Button, EvStream ())
-createIconButton icon mlbl = do
+type IconName = T.Text
+
+createDynamicButton :: Behavior Text ->  Now (Button,EvStream ())
+createDynamicButton s = do
+    button <- sync $ buttonNew
+    setAttr buttonLabel button s
+    stream <- getUnitSignal buttonActivated  button
+    return (button,stream)
+
+createButton :: Maybe IconName -> Maybe Text -> Now (Button, EvStream ())
+createButton micon mlbl = do
     btn <- sync buttonNew
-    sync $ do
-        img <- imageNewFromIconName icon IconSizeButton
-        case mlbl of
-            Nothing -> containerAdd btn img
-            Just lbl -> do
-                l <- labelNew mlbl
-                hb <- hBoxNew False 2
-                boxPackStart hb img PackNatural 0
-                boxPackStart hb l PackNatural 0
-                containerAdd btn hb
+    iattr <- case micon of
+        Just icon -> do
+            img <- sync $ imageNewFromIconName icon IconSizeButton
+            return [buttonImage := img]
+        Nothing -> return []
+    let tattr = maybeToList (fmap (buttonLabel :=) mlbl)
+    sync $ set btn (iattr ++ tattr)
     pressed <- getUnitSignal buttonActivated btn
     return (btn, pressed)
 
-
-createButton :: Behavior String ->  Now (Button,EvStream ())
-createButton s =
-  do button <- sync $ buttonNew
-     setAttr buttonLabel button s
-     stream <- getUnitSignal buttonActivated  button
-     return (button,stream)
+createToggleButton :: Maybe IconName -> Maybe Text -> Bool -> Now (ToggleButton, Behavior Bool)
+createToggleButton micon mlbl initstate = do
+    btn <- sync toggleButtonNew
+    iattr <- case micon of
+        Just icon -> do
+            img <- sync $ imageNewFromIconName icon IconSizeButton
+            return [buttonImage := img]
+        Nothing -> return []
+    let tattr = maybeToList (fmap (buttonLabel :=) mlbl)
+    sync $ set btn (iattr ++ tattr ++ [toggleButtonActive := initstate])
+    updated <- getSignal toggled btn (toggleButtonGetActive btn >>=)
+    st <- sample $ fromChanges initstate updated
+    return (btn,st)
 
 createEntry :: String -> Now (Entry, Behavior String)
 createEntry inittext = do
