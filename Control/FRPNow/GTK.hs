@@ -12,17 +12,22 @@
 -- This module provides interoperability of FRPNow and the GTK system.
 
 module Control.FRPNow.GTK(
-  -- * General interface
-  ffor, runNowGTK, setAttr, getSignal, getUnitSignal, getSimpleSignal, getClock,
-  -- * Utility functions
-  IconName, createLabel, createButton, createDynamicButton, createToggleButton,
-  createEntry, createProgressBar,createSlider,
+    -- * General interface
+    ffor, runNowGTK, getUnrealize, setAttr, getSignal, getUnitSignal, getSimpleSignal, getClock,
+    -- * Utility functions
+    IconName, createLabel,
+    createButton, createDynamicButton, createToggleButton,
+    createEntry,
+    createCheckButton, createChecklistItem, createStaticChecklist, createDynamicChecklist,
+    createProgressBar, createSimpleProgressBar,
+    createSlider,
 
-  runFileChooserDialog
-  ) where
+    runFileChooserDialog
+ ) where
 
 import Graphics.UI.Gtk
 import Control.Applicative
+import Control.Monad
 import Control.FRPNow
 import Data.Maybe
 import Data.IORef
@@ -34,6 +39,10 @@ import Data.Text (Text)
 
 ffor :: (Functor f) => f a -> (a -> b) -> f b
 ffor = flip fmap
+
+instance Monoid a => Monoid (Behavior a) where
+    mempty = pure mempty
+    x `mappend` y = mappend <$> x <*> y
 
 -- | Run a Now computation which can interact with GTK. Also starts the GTK system.
 -- Call only once, or GTK will freak out.
@@ -52,17 +61,22 @@ schedule ref m = postGUIAsync $
                       Just _ -> writeIORef ref x
                       Nothing -> return ()
 
+getUnrealize :: (WidgetClass w) => w -> Now (Event ())
+getUnrealize w = do
+    (e,cb) <- callback
+    sync $ on w unrealize (cb ())
+    return e
+
 -- | Set a GTK attribute to a behavior. Each time the behavior changes the
 -- attribute is updated.
 setAttr :: (WidgetClass w, Eq a) => ReadWriteAttr w b a -> w -> Behavior a -> Now ()
 setAttr a w b =
      do i <- sample b
         sync $ set w [a := i]
-        (e,cb) <- callback
-        sync $ on w unrealize ( cb ())
+        e <- getUnrealize w
         let updates = toChanges b `beforeEs` e
         callIOStream setEm updates
-  where setEm i = set w [a := i] >> widgetQueueDraw w
+  where setEm i = set w [a := i] -- >> widgetQueueDraw w
 
 
 -- | Obtain an event stream from a unit GTK signal, i.e. a signal with handler type:
@@ -127,6 +141,11 @@ getClock precision =
 
 --------------------------------------------------------------------------------
 
+clearChildren :: (ContainerClass w) => w -> IO ()
+clearChildren cont = do
+    children <- containerGetChildren cont
+    forM_ children widgetDestroy
+
 runFileChooserDialog :: FileChooserDialog -> Now (Event (Maybe FilePath))
 runFileChooserDialog dialog = do
     (retev, cb) <- callback
@@ -145,9 +164,12 @@ runFileChooserDialog dialog = do
 
 createLabel :: Behavior Text -> Now Label
 createLabel s = do
-     l <- sync $ labelNew (Nothing :: Maybe String)
+     l <- sync $ labelNew (Nothing :: Maybe Text)
      setAttr labelLabel l s
      return l
+
+
+
 
 type IconName = T.Text
 
@@ -193,8 +215,70 @@ createEntry inittext = do
     btext <- sample $ fromChanges inittext edits
     return (entry, btext)
 
-createProgressBar :: Behavior Double -> Now ProgressBar
-createProgressBar progress = do
+createCheckButton :: Text -> Bool -> Now (CheckButton, Behavior Bool)
+createCheckButton txt initstate = do
+    btn <- sync $ checkButtonNewWithLabel txt
+    sync $ set btn [toggleButtonActive := initstate]
+    updated <- getSignal toggled btn (toggleButtonGetActive btn >>=)
+    st <- sample $ fromChanges initstate updated
+    return (btn,st)
+
+createChecklistItem :: (a, Text) -> Bool -> Now (CheckButton, Behavior [a])
+createChecklistItem (val, txt) initstate = do
+    (btn,st) <- createCheckButton txt initstate
+    return (btn, fmap (\b -> if b then [val] else []) st)
+
+createStaticChecklist :: Eq a => [(a,Text)] -> [a] -> Now ([CheckButton], Behavior [a])
+createStaticChecklist items startchecked = do
+    btns <- forM items $ \item@(val,txt) ->
+        createChecklistItem item (val `elem` startchecked)
+    let (cbs, results) = unzip btns
+        vals = mconcat results
+    return (cbs, vals)
+
+
+createDynamicChecklist :: Eq a => Behavior [(a, Text)] -> Now (VBox, Behavior [a])
+createDynamicChecklist dynitems = do
+    box <- sync $ vBoxNew False 0
+    inititems <- sample dynitems
+    (initboxes,initselected) <- createStaticChecklist inititems []
+    sync $ forM_ initboxes $ \cb -> boxPackStart box cb PackNatural 0
+
+    let itemsChanged = toChanges dynitems
+    (outReplaced,replaceOut) <- callbackStream
+    selected <- sample $ foldrSwitch initselected outReplaced
+
+    flip callStream itemsChanged $ \itemslist -> do
+        let newitems = last itemslist
+        oldselection <- sample selected
+        sync $ clearChildren box
+        (newboxes,newselected) <- createStaticChecklist newitems oldselection
+        sync $ forM_ newboxes $ \cb -> boxPackStart box cb PackNatural 0
+        sync $ widgetShowAll box
+        sync $ replaceOut newselected
+        return ()
+
+    return (box,selected)
+
+
+
+
+
+
+
+createProgressBar :: Behavior (Maybe (Double, Text)) -> Now ProgressBar
+createProgressBar mprogress = do
+    let isactive = fmap isJust mprogress
+        position = fmap (maybe 0 fst) mprogress
+        lbl = fmap (maybe T.empty snd) mprogress
+    bar <- sync progressBarNew
+    setAttr progressBarFraction bar position
+    setAttr progressBarText bar lbl
+    setAttr widgetSensitive bar isactive
+    return bar
+
+createSimpleProgressBar :: Behavior Double -> Now ProgressBar
+createSimpleProgressBar progress = do
     bar <- sync $ progressBarNew
     setAttr progressBarFraction bar progress
     return bar
