@@ -12,7 +12,10 @@ import qualified Data.Text as T
 import Data.Text (Text)
 
 createLabel :: (MonadIO m) => Text -> m Label
-createLabel t = liftIO $ set' [miscXalign := 0] =<< labelNew (Just t)
+createLabel t = liftIO $ do
+    l <- labelNew (Just t)
+    set l [miscXalign := 0]
+    return l
 
 createLabelDisplay :: Behavior Text -> Now Label
 createLabelDisplay s = do
