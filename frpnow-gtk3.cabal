@@ -1,5 +1,5 @@
 Name:                frpnow-gtk3
-Version:             0.12
+Version:             0.2
 Synopsis:	     Program GUIs with GTK and frpnow!
 Description:          Program GUIs with GTK and frpnow!
 License:             BSD3
@@ -15,6 +15,12 @@ Tested-With:         GHC==7.10.1
 Library
   Build-Depends: base >= 2 && <= 6, mtl >= 1.0, containers, transformers, frpnow, glib, gtk3, text
   Exposed-modules: Control.FRPNow.GTK
+                 , Control.FRPNow.GTK.Core
+                 , Control.FRPNow.GTK.Buttons
+                 , Control.FRPNow.GTK.Containers
+                 , Control.FRPNow.GTK.DataWidgets
+                 , Control.FRPNow.GTK.Misc
+                 , Control.FRPNow.GTK.MissingFFI
 
 source-repository head
     type:     git
