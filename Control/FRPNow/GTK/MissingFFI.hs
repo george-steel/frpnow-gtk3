@@ -14,3 +14,6 @@ scrolledWindowOverlay = newAttrFromBoolProperty "overlay-scrolling"
 
 panedWideHandle :: PanedClass self => Attr self Bool
 panedWideHandle = newAttrFromBoolProperty "wide-handle"
+
+progressBarShowText :: ProgressBarClass self => Attr self Bool
+progressBarShowText = newAttrFromBoolProperty "show-text"

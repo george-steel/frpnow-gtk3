@@ -1,6 +1,7 @@
 module Control.FRPNow.GTK.DataWidgets where
 
 import Control.FRPNow.GTK.Core
+import Control.FRPNow.GTK.MissingFFI
 import Graphics.UI.Gtk
 import Control.Applicative
 import Control.Monad
@@ -83,6 +84,7 @@ createProgressBar mprogress = do
         position = fmap (maybe 0 fst) mprogress
         lbl = fmap (maybe T.empty snd) mprogress
     bar <- sync progressBarNew
+    sync $ set bar [progressBarShowText := True]
     setAttr progressBarFraction bar position
     setAttr progressBarText bar lbl
     setAttr widgetSensitive bar isactive

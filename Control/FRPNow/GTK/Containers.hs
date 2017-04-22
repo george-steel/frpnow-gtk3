@@ -65,6 +65,33 @@ createGrid xspace yspace filler = liftIO $ do
 
 
 
+createStack :: (MonadIO m) => ReaderT Stack IO () -> m Stack
+createStack filler = liftIO $ do
+    s <- stackNew
+    runReaderT filler s
+    return s
+
+stackElem :: (WidgetClass w) => Text -> w -> ReaderT Stack IO ()
+stackElem key w = ReaderT $ \s -> stackAddNamed s w key
+
+stackElemTitled :: (WidgetClass w) => Text -> Text -> w -> ReaderT Stack IO ()
+stackElemTitled key title w = ReaderT $ \s -> stackAddTitled s w key title
+
+createStackSwitcher :: (MonadIO m) => Stack -> m StackSwitcher
+createStackSwitcher s = liftIO $ do
+    sw <- stackSwitcherNew
+    stackSwitcherSetStack sw s
+    return sw
+
+createNotebook :: (MonadIO m) => ReaderT Notebook IO () -> m Notebook
+createNotebook filler = liftIO $ do
+    s <- notebookNew
+    runReaderT filler s
+    return s
+
+nbpage :: (WidgetClass w) => Text -> w -> ReaderT Notebook IO ()
+nbpage lbl w = ReaderT $ \nb -> void (notebookAppendPage nb w lbl)
+
 createExpander :: (MonadIO m, WidgetClass w) => Text -> Bool -> w -> m Expander
 createExpander lbl startpos w = liftIO $ do
     ex <- expanderNew lbl
