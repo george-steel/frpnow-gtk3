@@ -19,6 +19,7 @@ Library
                  , Control.FRPNow.GTK.Buttons
                  , Control.FRPNow.GTK.Containers
                  , Control.FRPNow.GTK.DataWidgets
+                 , Control.FRPNow.GTK.TreeView
                  , Control.FRPNow.GTK.Misc
                  , Control.FRPNow.GTK.MissingFFI
 

@@ -12,6 +12,31 @@ import qualified Data.Text as T
 import Data.Text (Text)
 import System.IO
 import Control.Exception
+import Control.Concurrent
+import Control.Concurrent.MVar
+
+mapBAsync :: (Eq a) => Event () -> b -> (a -> b) -> Behavior a -> Now (Behavior b, Behavior Bool)
+mapBAsync stop yinit f xb = do
+    xinit <- sample xb
+    let xchanged = toChanges xb `beforeEs` stop
+    (pendingSet, setPending) <- callbackStream
+    (yset, sety) <- callbackStream
+    pending <- sample $ fromChanges True (merge (False <$ yset) pendingSet)
+    q <- sync $ newMVar xinit
+    flip callStream xchanged $ \xs -> let
+        x = last xs
+        in sync $ tryTakeMVar q >> putMVar q x
+    sync . forkIO . forever $ do
+        x <- takeMVar q
+        setPending True
+        y <- evaluate (f x)
+        sety y
+        setPending False
+    yb <- sample $ fromChanges yinit yset
+    return (yb, pending)
+
+beforeE :: Event a -> Event () -> Behavior (Event a)
+beforeE ev cutoff = fmap join $ first (never <$ cutoff) (pure <$> ev)
 
 setLockedFuturistic :: (WidgetClass w) => w -> Behavior Bool -> Now ()
 setLockedFuturistic w lock = do
