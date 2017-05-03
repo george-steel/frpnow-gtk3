@@ -2,15 +2,22 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Control.FRPNow.GTK.Core
--- Copyright   :  (c) Atze van der Ploeg 2015
--- License     :  BSD-style
--- Maintainer  :  atzeus@gmail.org
--- Stability   :  provisional
--- Portability :  portable
+-- Copyright   :  (c) Atze van der Ploeg 2015, George Steel 2017
+-- License     :  BSD3
+-- Maintainer  :  george.steel@gmail.org
 --
--- This module provides interoperability of FRPNow and the GTK system.
+-- Core functions for inteoperability between GTK and FRPNow
 
-module Control.FRPNow.GTK.Core where
+module Control.FRPNow.GTK.Core (
+    ffor,
+    runNowGTK,
+    setAttr,
+    getUnrealize,
+    getSignal,
+    getSimpleSignal,
+    getUnitSignal,
+    getClock
+) where
 
 import Graphics.UI.Gtk
 import Control.Applicative
@@ -51,27 +58,25 @@ schedule ref m = postGUIAsync $
                       Just _ -> writeIORef ref x
                       Nothing -> return ()
 
+-- | Get an event that fires when a widget is destroyed. Useful for cutting off event streams with 'beforeEs'.
 getUnrealize :: (WidgetClass w) => w -> Now (Event ())
 getUnrealize w = do
     (e,cb) <- callback
     sync $ on w unrealize (cb ())
     return e
 
--- | Set a GTK attribute to a behavior. Each time the behavior changes the
--- attribute is updated.
-setAttr :: (WidgetClass w, Eq a) => ReadWriteAttr w b a -> w -> Behavior a -> Now ()
+-- | Set a GTK attribute to a behavior. Each time the behavior changes the attribute is updated.
+setAttr :: (WidgetClass w, Eq b) => ReadWriteAttr w a b -> w -> Behavior b -> Now ()
 setAttr a w b =
      do i <- sample b
         sync $ set w [a := i]
         e <- getUnrealize w
         let updates = toChanges b `beforeEs` e
         callIOStream setEm updates
-  where setEm i = set w [a := i] -- >> widgetQueueDraw w
+  where setEm i = set w [a := i]
 
 
--- | Obtain an event stream from a unit GTK signal, i.e. a signal with handler type:
---
--- > IO ()
+-- | Obtain an event stream from a unit GTK signal, i.e. a signal with handler type: @IO ()@
 getUnitSignal :: GObjectClass widget => Signal widget (IO ()) -> widget -> Now (EvStream ())
 getUnitSignal s w = getSignal s w (\f -> f ())
 
@@ -97,19 +102,20 @@ getSimpleSignal s w = getSignal s w id
 -- > scrollToEvStream s w = getSignal s w convert where
 -- >   convert call scrolltype double = do call (scrolltype, double)
 -- >                                       return False
---
--- The signal is automatically disconnected, when the event stream is garbage collected.
+
+-- REMOVED: The signal is automatically disconnected, when the event stream is garbage collected.
 getSignal :: GObjectClass widget => Signal widget callback -> widget -> ((value -> IO ()) -> callback) -> Now (EvStream value)
 getSignal s w conv =
    do (res,f) <- callbackStream
       conn <- sync $ on w s (conv f)
       --sync $ addFinalizer res (putStrLn "Run final" >> signalDisconnect conn)
       return res
+-- The signal is automatically disconnected, when the event stream is garbage collected.
 
 
 -- | Get a clock that gives the time since the creation of the clock in seconds, and updates maximally even given number of seconds.
---
--- The clock is automatically destroyed and all resources associated with the clock are freed
+
+-- REMOVED: The clock is automatically destroyed and all resources associated with the clock are freed
 -- when the behavior is garbage collected.
 getClock :: Double -> Now (Behavior Double)
 getClock precision =

@@ -1,28 +1,35 @@
 Name:                frpnow-gtk3
-Version:             0.2
-Synopsis:	     Program GUIs with GTK and frpnow!
-Description:          Program GUIs with GTK and frpnow!
+Version:             0.2.0
+Synopsis:	         Program GUIs with GTK3 and frpnow!
+Description:         High-level interface for GTK3 with FRPNow integration.
 License:             BSD3
 License-file:        LICENSE
-Author:              Atze van der Ploeg and George Steel
+Author:              George Steel, Atze van der Ploeg
 Maintainer:          george.steel@gmail.com
-Homepage:            https://github.com/atzeus/FRPNow
+Homepage:            https://github.com/george-steel/frpnow-gtk3
 Build-Type:          Simple
-Cabal-Version:       >=1.6
+Cabal-Version:       >=1.10
 Category:            Control
 Tested-With:         GHC==7.10.1
 
 Library
-  Build-Depends: base >= 2 && <= 6, mtl >= 1.0, containers, transformers, frpnow, glib, gtk3, text
-  Exposed-modules: Control.FRPNow.GTK
-                 , Control.FRPNow.GTK.Core
-                 , Control.FRPNow.GTK.Buttons
-                 , Control.FRPNow.GTK.Containers
-                 , Control.FRPNow.GTK.DataWidgets
-                 , Control.FRPNow.GTK.TreeView
-                 , Control.FRPNow.GTK.Misc
-                 , Control.FRPNow.GTK.MissingFFI
+  default-language:  Haskell2010
+  Build-Depends:     base >= 2 && <= 6
+                   , mtl >= 1.0
+                   , containers
+                   , frpnow >= 0.18
+                   , glib
+                   , gtk3
+                   , text
+  Exposed-modules:   Control.FRPNow.GTK
+                   , Control.FRPNow.GTK.Core
+                   , Control.FRPNow.GTK.Buttons
+                   , Control.FRPNow.GTK.Containers
+                   , Control.FRPNow.GTK.DataWidgets
+                   , Control.FRPNow.GTK.TreeView
+                   , Control.FRPNow.GTK.Misc
+                   , Control.FRPNow.GTK.MissingFFI
 
 source-repository head
     type:     git
-    location: https://github.com/atzeus/FRPNow/FRPNow-GTK
+    location: https://github.com/george-steel/frpnow-gtk3

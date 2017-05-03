@@ -1,5 +1,15 @@
 {-# LANGUAGE OverloadedStrings #-}
 
+{- |
+Module      :  Control.FRPNow.GTK.MissingFFI
+Copyright   :  (c) George Steel 2017
+License     :  BSD3
+Maintainer  :  george.steel@gmail.org
+
+Missing but necessary 'Attr' definitions which have not nade it into gtk3hs yet.
+
+-}
+
 module Control.FRPNow.GTK.MissingFFI where
 
 import Graphics.UI.Gtk

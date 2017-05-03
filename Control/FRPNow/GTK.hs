@@ -3,13 +3,11 @@
 -----------------------------------------------------------------------------
 -- |
 -- Module      :  Control.FRPNow.GTK
--- Copyright   :  (c) Atze van der Ploeg 2015
--- License     :  BSD-style
--- Maintainer  :  atzeus@gmail.org
--- Stability   :  provisional
--- Portability :  portable
+-- Copyright   :  (c) George Steel 2017
+-- License     :  BSD3
+-- Maintainer  :  george.steel@gmail.org
 --
--- This module provides interoperability of FRPNow and the GTK system.
+-- This module gathers all functions in frpnow-gtk3
 
 module Control.FRPNow.GTK(
     module Control.FRPNow.GTK.Core,
