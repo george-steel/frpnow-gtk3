@@ -42,7 +42,7 @@ createButton micon mlbl = do
     pressed <- getUnitSignal buttonActivated btn
     return (btn, pressed)
 
--- | Creates a toggle button with an initial state. Breutns the button and it's current state.
+-- | Creates a toggle button with an initial state. Returns the button and its current state.
 createToggleButton :: Maybe IconName -> Maybe Text -> Bool -> Now (ToggleButton, Behavior Bool)
 createToggleButton micon mlbl initstate = do
     btn <- sync toggleButtonNew
